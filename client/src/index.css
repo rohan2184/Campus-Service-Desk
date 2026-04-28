@@ -1,0 +1,140 @@
+@import "tailwindcss";
+
+/* ===== CSD Brand Color Palette ===== */
+:root {
+  /* Light Mode */
+  --csd-bg-main: #fffdfa;
+  --csd-bg-surface: #ffffff;
+  --csd-bg-subtle: #fff7ed;
+
+  --csd-text-primary: #431407;
+  --csd-text-secondary: #9a3412;
+  --csd-text-muted: #fb923c;
+
+  --csd-brand-primary: #ea580c;
+  --csd-brand-primary-dark: #c2410c;
+  --csd-accent: #f97316;
+  --csd-accent-hover: #fb923c;
+
+  --csd-sidebar-bg: #ffffff;
+  --csd-sidebar-text: #431407;
+  --csd-sidebar-active-bg: #ffedd5;
+  --csd-sidebar-active-text: #ea580c;
+}
+
+.dark {
+  --csd-bg-main: #1a0a04;
+  --csd-bg-surface: #2d1406;
+  --csd-bg-subtle: #431407;
+
+  --csd-text-primary: #fff7ed;
+  --csd-text-secondary: #fed7aa;
+  --csd-text-muted: #fdba74;
+
+  --csd-brand-primary: #ea580c;
+  --csd-brand-primary-dark: #9a3412;
+  --csd-accent: #f97316;
+  --csd-accent-hover: #fb923c;
+
+  --csd-sidebar-bg: #2d1406;
+  --csd-sidebar-text: #fed7aa;
+  --csd-sidebar-active-bg: rgba(234, 88, 12, 0.15);
+  --csd-sidebar-active-text: #f97316;
+}
+
+/* ===== Global Overrides ===== */
+body {
+  background-color: var(--csd-bg-main);
+  color: var(--csd-text-primary);
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
+}
+
+/* ===== Sidebar Modes ===== */
+.sidebar {
+  transition:
+    width 0.3s ease,
+    transform 0.3s ease;
+}
+
+.sidebar-collapsed {
+  width: 72px;
+}
+
+.sidebar-expanded {
+  width: 256px;
+}
+
+.sidebar-autohide {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  transform: translateX(-184px);
+  z-index: 40;
+}
+
+.sidebar-autohide:hover {
+  transform: translateX(0);
+}
+
+/* Smooth transitions for dark mode on cards and surfaces */
+.dark .bg-white {
+  background-color: var(--csd-bg-surface) !important;
+  color: var(--csd-text-primary);
+}
+
+.dark .bg-gray-100 {
+  background-color: var(--csd-bg-main) !important;
+}
+
+.dark .bg-gray-50 {
+  background-color: var(--csd-bg-subtle) !important;
+}
+
+.dark .text-gray-800,
+.dark .text-gray-900 {
+  color: var(--csd-text-primary) !important;
+}
+
+.dark .text-gray-600,
+.dark .text-gray-700 {
+  color: var(--csd-text-secondary) !important;
+}
+
+.dark .text-gray-500,
+.dark .text-gray-400 {
+  color: var(--csd-text-muted) !important;
+}
+
+.dark .border-gray-100,
+.dark .border-gray-200 {
+  border-color: rgba(234, 88, 12, 0.3) !important;
+}
+
+.dark input,
+.dark select,
+.dark textarea {
+  background-color: var(--csd-bg-subtle) !important;
+  color: var(--csd-text-primary) !important;
+  border-color: rgba(234, 88, 12, 0.4) !important;
+}
+
+/* Fixes for Tailwind colored cards in dark mode */
+.dark .bg-green-50 { background-color: rgba(34, 197, 94, 0.1) !important; border-color: rgba(34, 197, 94, 0.2) !important; }
+.dark .bg-orange-50 { background-color: rgba(234, 88, 12, 0.1) !important; border-color: rgba(234, 88, 12, 0.2) !important; }
+.dark .bg-purple-50 { background-color: rgba(168, 85, 247, 0.1) !important; border-color: rgba(168, 85, 247, 0.2) !important; }
+.dark .bg-red-50 { background-color: rgba(239, 68, 68, 0.1) !important; border-color: rgba(239, 68, 68, 0.2) !important; }
+.dark .bg-yellow-50 { background-color: rgba(234, 179, 8, 0.1) !important; border-color: rgba(234, 179, 8, 0.2) !important; }
+
+/* Fixes for text colors inside cards in dark mode */
+.dark .text-green-800, .dark .text-green-700 { color: #86efac !important; }
+.dark .text-orange-800, .dark .text-orange-700 { color: #fdba74 !important; }
+.dark .text-purple-800, .dark .text-purple-700 { color: #d8b4fe !important; }
+.dark .text-red-800, .dark .text-red-700 { color: #fca5a5 !important; }
+.dark .text-yellow-800, .dark .text-yellow-700 { color: #fde047 !important; }
+
+/* Fixes for table row hover and special backgrounds */
+.dark .hover\:bg-gray-50:hover { background-color: var(--csd-bg-subtle) !important; }
+.dark .bg-orange-50\/30 { background-color: rgba(234, 88, 12, 0.15) !important; }
