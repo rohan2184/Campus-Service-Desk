@@ -2,6 +2,11 @@
 
 A full-stack campus helpdesk application for students, staff, and administrators. The system lets students raise service tickets, staff manage assigned work, and admins oversee approvals, users, analytics, FAQs, and ticket operations.
 
+## Live Application
+
+The project is deployed and live at:
+- **Client URL:** [https://campus-service-desk.vercel.app](https://campus-service-desk.vercel.app)
+- **Backend API:** [https://campus-service-desk-api.onrender.com/api](https://campus-service-desk-api.onrender.com/api)
 ## Features
 
 - Role-based authentication for students, staff, and admins

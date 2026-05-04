@@ -28,21 +28,21 @@ export default function StudentDashboard() {
 
     return (
         <div>
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-800">Welcome back, {firstName}! 👋</h1>
+                    <h1 className="text-xl sm:text-2xl font-bold text-gray-800">Welcome back, {firstName}! 👋</h1>
                     <p className="text-gray-500 text-sm mt-1">Here's what's happening with your tickets</p>
                 </div>
                 <button
                     onClick={() => navigate('/dashboard/create-ticket')}
-                    className="flex items-center gap-2 bg-orange-600 text-white px-4 py-2.5 rounded-lg hover:bg-orange-700 transition font-medium text-sm"
+                    className="flex items-center justify-center gap-2 bg-orange-600 text-white px-4 py-2.5 rounded-lg hover:bg-orange-700 transition font-medium text-sm w-full sm:w-auto"
                 >
                     <Plus size={18} /> New Ticket
                 </button>
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-8">
                 <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
                     <div>
                         <p className="text-gray-500 text-xs font-medium">Active</p>

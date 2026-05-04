@@ -138,3 +138,59 @@ body {
 /* Fixes for table row hover and special backgrounds */
 .dark .hover\:bg-gray-50:hover { background-color: var(--csd-bg-subtle) !important; }
 .dark .bg-orange-50\/30 { background-color: rgba(234, 88, 12, 0.15) !important; }
+
+/* ===== Mobile Sidebar Drawer ===== */
+.mobile-sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.2s ease;
+}
+
+.mobile-sidebar-drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 280px;
+  z-index: 50;
+  transform: translateX(-100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mobile-sidebar-drawer.mobile-sidebar-open {
+  transform: translateX(0);
+}
+
+/* On desktop (md+), override the mobile drawer positioning */
+@media (min-width: 768px) {
+  .mobile-sidebar-drawer {
+    position: relative;
+    transform: none;
+    width: 256px;
+    z-index: auto;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ===== Mobile Ticket Row ===== */
+@media (max-width: 767px) {
+  /* Stack ticket row items vertically on small screens */
+  .ticket-row-mobile {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 0.5rem;
+  }
+
+  /* Ensure tables scroll horizontally */
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
