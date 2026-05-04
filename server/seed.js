@@ -7,594 +7,557 @@ dotenv.config();
 const User = require('./models/User');
 const Ticket = require('./models/Ticket');
 const Notification = require('./models/Notification');
+const FAQ = require('./models/FAQ');
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/campus-service-desk';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/campus-service-desk';
+const MONGO_DB_NAME = process.env.MONGO_DB_NAME || 'campus-service-desk';
+const PASSWORD = 'password123';
+
+const departments = [
+    'IT Support',
+    'Facilities',
+    'Academic Services',
+    'Library Services',
+    'Student Affairs',
+    'Finance Office',
+    'Hostel Administration',
+    'Security',
+    'Sports Complex',
+    'Health Center',
+];
+
+const firstNames = [
+    'Aarav', 'Aditi', 'Aditya', 'Akash', 'Aman', 'Amrita', 'Ananya', 'Anika', 'Anjali', 'Arjun',
+    'Avni', 'Dev', 'Dia', 'Divya', 'Esha', 'Farhan', 'Gauri', 'Harsh', 'Ira', 'Ishaan',
+    'Ishita', 'Kabir', 'Karan', 'Kavya', 'Krish', 'Leela', 'Manav', 'Meera', 'Mihir', 'Naina',
+    'Neel', 'Nikhil', 'Nisha', 'Om', 'Parth', 'Pranav', 'Priya', 'Raghav', 'Rahul', 'Rhea',
+    'Riya', 'Rohan', 'Saanvi', 'Sahil', 'Sakshi', 'Samaira', 'Samar', 'Sanaya', 'Sanya', 'Shaurya',
+    'Shruti', 'Siddharth', 'Sneha', 'Tara', 'Tanvi', 'Ved', 'Vihaan', 'Vikram', 'Yash', 'Zara',
+];
+
+const lastNames = [
+    'Agarwal', 'Bansal', 'Banerjee', 'Bhatt', 'Chandra', 'Chauhan', 'Das', 'Desai', 'Dubey', 'Fernandes',
+    'Ghosh', 'Goyal', 'Gupta', 'Iyer', 'Jain', 'Joshi', 'Kapoor', 'Khan', 'Kulkarni', 'Kumar',
+    'Malhotra', 'Mehta', 'Menon', 'Mishra', 'Nair', 'Patel', 'Pillai', 'Rao', 'Reddy', 'Saxena',
+    'Sen', 'Sharma', 'Singh', 'Soni', 'Srivastava', 'Thakur', 'Thomas', 'Tiwari', 'Varma', 'Yadav',
+];
+
+const studentPersonas = [
+    { label: 'meticulous planner', voice: 'includes exact times, room numbers, and screenshots when reporting issues' },
+    { label: 'quiet researcher', voice: 'writes calmly and gives patient follow-up notes' },
+    { label: 'deadline-driven multitasker', voice: 'mentions assignment deadlines and asks for practical workarounds' },
+    { label: 'student club organizer', voice: 'frames issues around groups, events, and shared resources' },
+    { label: 'commuter student', voice: 'cares about timing, transport, parking, and campus access' },
+    { label: 'first-year explorer', voice: 'asks basic process questions and appreciates clear instructions' },
+    { label: 'lab-focused tinkerer', voice: 'reports technical symptoms with device names and error messages' },
+    { label: 'sports captain', voice: 'raises safety and facility issues with direct urgency' },
+    { label: 'library regular', voice: 'notices quiet-zone, booking, and resource availability details' },
+    { label: 'hostel resident', voice: 'reports recurring residential issues with room/block context' },
+    { label: 'international student', voice: 'asks for documentation and office-process clarity' },
+    { label: 'peer mentor', voice: 'mentions how an issue affects juniors or classmates' },
+];
+
+const staffPersonas = [
+    { label: 'methodical troubleshooter', voice: 'documents each check before changing status' },
+    { label: 'warm front-desk coordinator', voice: 'responds with reassurance and next steps' },
+    { label: 'pragmatic field technician', voice: 'updates tickets with concise repair notes' },
+    { label: 'policy-minded administrator', voice: 'references process, approvals, and expected timelines' },
+    { label: 'student-first advisor', voice: 'adds context-sensitive guidance and confirms closure criteria' },
+    { label: 'operations dispatcher', voice: 'assigns vendors, logs inspections, and tracks dependencies' },
+];
+
+const ticketTemplates = [
+    {
+        category: 'IT Support',
+        titles: [
+            'Campus WiFi keeps dropping in {place}',
+            'Unable to sign in to student portal',
+            'Lab desktop shows authentication error',
+            'Printer queue stuck before submission deadline',
+            'VPN access not working from hostel network',
+            'Smart board touch input is not responding',
+            'Course registration page times out repeatedly',
+            'Campus email account is locked',
+            'Projector HDMI input fails during class',
+            'Software license unavailable in computer lab',
+        ],
+        places: ['Library 2nd Floor', 'Computer Lab 1', 'Computer Lab 2', 'Room 305 Block A', 'Seminar Hall', 'Boys Hostel Block D'],
+        details: [
+            'The issue is repeatable on multiple devices and has affected more than one student.',
+            'I tried restarting, clearing cache, and using a different cable, but the problem remains.',
+            'This is affecting coursework because the required online material cannot be accessed reliably.',
+            'The error appears after login and then redirects back to the same page.',
+        ],
+    },
+    {
+        category: 'Facilities',
+        titles: [
+            'AC not working in {place}',
+            'Water cooler leaking near {place}',
+            'Broken chairs need replacement in {place}',
+            'Power outlets are dead in {place}',
+            'Elevator maintenance needed at {place}',
+            'Roof leakage reported in {place}',
+            'Washroom plumbing issue in {place}',
+            'Lighting is poor near {place}',
+            'Door lock is jammed at {place}',
+            'Ceiling fan makes loud noise in {place}',
+        ],
+        places: ['Classroom 101', 'Room 204 Block A', 'Library Reading Room', 'Block B Entrance', 'Indoor Sports Complex', 'Girls Hostel Block A'],
+        details: [
+            'The issue has been present for several days and is now disrupting regular use of the space.',
+            'There is a safety concern because people may trip, slip, or avoid the area after dark.',
+            'A temporary fix was attempted by the floor assistant, but the problem returned.',
+            'The room is used for scheduled classes, so the repair window needs coordination.',
+        ],
+    },
+    {
+        category: 'Academic Services',
+        titles: [
+            'Transcript copy request for internship application',
+            'Grade mismatch on the portal for {place}',
+            'Course registration approval pending',
+            'Scholarship form download link is broken',
+            'Exam result is not visible on portal',
+            'ID card replacement request',
+            'Request for extra tutorial sessions',
+            'Attendance correction needed for {place}',
+            'Lab manual upload missing for {place}',
+            'Bonafide certificate request',
+        ],
+        places: ['Data Structures', 'Mathematics', 'Physics Lab', 'Semester 5', 'CSE Department', 'Academic Office'],
+        details: [
+            'The deadline is close, so I would appreciate a clear expected completion date.',
+            'I have supporting documents ready and can visit the office if needed.',
+            'Several classmates have reported the same discrepancy on their dashboards.',
+            'The portal shows different information from the notice board update.',
+        ],
+    },
+    {
+        category: 'Other',
+        titles: [
+            'Canteen hygiene complaint',
+            'Parking area lights are not working near {place}',
+            'CCTV coverage concern at {place}',
+            'Lost and found request for {place}',
+            'Medical room appointment scheduling issue',
+            'Club event space approval pending',
+            'Fire extinguisher inspection overdue at {place}',
+            'Noise complaint near {place}',
+            'Security desk entry log mismatch',
+            'Sports equipment checkout issue',
+        ],
+        places: ['Gate 1', 'Gate 2', 'Main Canteen', 'Auditorium Lobby', 'Block D Corridor', 'Sports Complex'],
+        details: [
+            'This affects a group of students and would be easier to solve with a campus-wide update.',
+            'I am reporting this early because it could become a safety issue if ignored.',
+            'The staff on duty was helpful, but the issue needs official tracking.',
+            'Please let me know whether this belongs to another office if I selected the wrong category.',
+        ],
+    },
+];
+
+const priorityByStatus = {
+    Approval: ['Low', 'Medium', 'Medium', 'High'],
+    Open: ['Low', 'Medium', 'Medium', 'High', 'Urgent'],
+    'In Progress': ['Medium', 'High', 'High', 'Urgent'],
+    Completed: ['Low', 'Medium', 'High'],
+    Review: ['Medium', 'High'],
+    Closed: ['Low', 'Medium', 'High', 'Urgent'],
+};
+
+const statusFlow = {
+    Approval: ['Approval'],
+    Open: ['Approval', 'Open'],
+    'In Progress': ['Approval', 'Open', 'In Progress'],
+    Completed: ['Approval', 'Open', 'In Progress', 'Completed'],
+    Review: ['Approval', 'Open', 'In Progress', 'Completed', 'Review'],
+    Closed: ['Approval', 'Open', 'In Progress', 'Completed', 'Review', 'Closed'],
+};
+
+const faqData = [
+    ['How do I track a ticket?', 'General', 'Open your dashboard and select My Tickets. Staff and admins can view all tickets from their ticket list.'],
+    ['Why does my ticket begin in Approval?', 'General', 'New student tickets enter Approval so an admin can validate category, priority, and assignment.'],
+    ['Who can assign a ticket to staff?', 'Administration', 'Admins can assign and reassign tickets. Staff can update ticket progress after assignment.'],
+    ['When can feedback be submitted?', 'General', 'Feedback is available when a ticket reaches Review. Submitting feedback moves it to Closed.'],
+    ['What counts as urgent?', 'General', 'Urgent issues involve safety, outages, deadlines, or campus-wide disruption.'],
+    ['Can I add comments after creating a ticket?', 'General', 'Yes. The requester, assigned staff, and admins can add comments while the ticket is active.'],
+    ['What should I include in IT tickets?', 'IT Support', 'Include device name, room, screenshots, exact error text, and whether others are affected.'],
+    ['How do I request software installation?', 'IT Support', 'Create an IT Support ticket with lab name, software version, course, and license urgency.'],
+    ['How are WiFi issues handled?', 'IT Support', 'IT staff inspect the access point, affected area, login logs, and device pattern before updating status.'],
+    ['What should facilities tickets include?', 'Facilities', 'Include building, room, floor, photo if available, and whether there is a safety concern.'],
+    ['Who handles hostel maintenance?', 'Facilities', 'Hostel Administration coordinates with Facilities for residential blocks.'],
+    ['How do I report broken classroom equipment?', 'Facilities', 'Create a Facilities ticket and include the room, equipment type, and class schedule impact.'],
+    ['How do transcript requests work?', 'Academic Services', 'Submit a ticket with purpose and deadline. Academic Services will confirm documents and pickup timing.'],
+    ['How do I report a grade mismatch?', 'Academic Services', 'Attach or describe the correct marks, course name, semester, and portal value shown.'],
+    ['Can tutorial sessions be requested?', 'Academic Services', 'Yes. Add the course, batch, number of affected students, and preferred times.'],
+    ['How do I report canteen issues?', 'Other', 'Use Other and include date, stall, item, receipt details if available, and health or hygiene concerns.'],
+    ['Can safety concerns be reported here?', 'Other', 'Yes. Mark them High or Urgent depending on immediate risk.'],
+    ['What happens after a ticket is completed?', 'General', 'Completed tickets move to Review so the requester can confirm satisfaction and close the loop.'],
+];
+
+const rand = (() => {
+    let seed = 20260504;
+    return () => {
+        seed = (seed * 1664525 + 1013904223) % 4294967296;
+        return seed / 4294967296;
+    };
+})();
+
+const pick = (items) => items[Math.floor(rand() * items.length)];
+const pad = (value, width) => String(value).padStart(width, '0');
+const slug = (value) => value.toLowerCase().replace(/[^a-z0-9]+/g, '.').replace(/(^\.|\.$)/g, '');
+const daysAgo = (days, hour = 10) => {
+    const date = new Date();
+    date.setDate(date.getDate() - days);
+    date.setHours(hour, Math.floor(rand() * 60), 0, 0);
+    return date;
+};
+
+const addHours = (date, hours) => new Date(date.getTime() + hours * 60 * 60 * 1000);
+
+const makeUser = ({ name, email, role, department, contactInfo, persona, password, isActive }) => ({
+    name,
+    email,
+    password,
+    role,
+    department,
+    contactInfo,
+    avatar: '',
+    isActive: typeof isActive === 'boolean' ? isActive : rand() > 0.04,
+    persona,
+});
+
+const makeUsers = async () => {
+    const hashedPassword = await bcrypt.hash(PASSWORD, 10);
+    const users = [
+        makeUser({
+            name: 'CSD Student Demo',
+            email: 'students@csd.edu',
+            password: hashedPassword,
+            role: 'student',
+            contactInfo: '9700000001',
+            persona: studentPersonas[0],
+            isActive: true,
+        }),
+        makeUser({
+            name: 'CSD Staff Demo',
+            email: 'staff@csd.edu',
+            password: hashedPassword,
+            role: 'staff',
+            department: 'IT Support',
+            contactInfo: '9800000001',
+            persona: staffPersonas[0],
+            isActive: true,
+        }),
+        makeUser({
+            name: 'CSD Admin Demo',
+            email: 'admin@csd.edu',
+            password: hashedPassword,
+            role: 'admin',
+            department: 'Administration',
+            contactInfo: '9900000001',
+            persona: staffPersonas[3],
+            isActive: true,
+        }),
+    ];
+
+    for (let i = 1; i <= 5; i++) {
+        const name = `${pick(firstNames)} ${pick(lastNames)}`;
+        users.push(makeUser({
+            name,
+            email: `admin.${pad(i, 2)}@csd.edu`,
+            password: hashedPassword,
+            role: 'admin',
+            department: 'Administration',
+            contactInfo: `99${pad(10000000 + i, 8)}`,
+            persona: pick(staffPersonas),
+        }));
+    }
+
+    for (let i = 1; i <= 42; i++) {
+        const name = `${pick(firstNames)} ${pick(lastNames)}`;
+        const department = departments[(i - 1) % departments.length];
+        users.push(makeUser({
+            name,
+            email: `${slug(name)}.${pad(i, 3)}@staff.csd.edu`,
+            password: hashedPassword,
+            role: 'staff',
+            department,
+            contactInfo: `98${pad(20000000 + i, 8)}`,
+            persona: pick(staffPersonas),
+        }));
+    }
+
+    for (let i = 1; i <= 150; i++) {
+        const name = `${pick(firstNames)} ${pick(lastNames)}`;
+        users.push(makeUser({
+            name,
+            email: `${slug(name)}.${pad(i, 3)}@student.csd.edu`,
+            password: hashedPassword,
+            role: 'student',
+            contactInfo: `97${pad(30000000 + i, 8)}`,
+            persona: pick(studentPersonas),
+        }));
+    }
+
+    return users;
+};
+
+const makeHistory = (flow, actors, createdAt) => {
+    const actions = [];
+    const timestamps = [];
+    flow.forEach((state, index) => {
+        const timestamp = addHours(createdAt, index * (8 + Math.floor(rand() * 16)));
+        timestamps.push({ state, timestamp });
+
+        if (index === 0) {
+            actions.push({ action: 'Ticket Created', by: actors.requester._id, timestamp });
+            return;
+        }
+
+        const previous = flow[index - 1];
+        const by = state === 'Open' ? actors.admin._id : (actors.staff?._id || actors.admin._id);
+        actions.push({ action: `Status changed from "${previous}" to "${state}"`, by, timestamp });
+    });
+
+    if (actors.staff) {
+        actions.splice(2, 0, {
+            action: `Ticket assigned to ${actors.staff.name}`,
+            by: actors.admin._id,
+            timestamp: addHours(createdAt, 6),
+        });
+    }
+
+    return { history: actions, stateEntryTimestamps: timestamps };
+};
+
+const makeComments = ({ requester, staff, admin, status, createdAt, template }) => {
+    const comments = [];
+    const requesterTone = requester.persona?.voice || 'shares useful context';
+    comments.push({
+        user: requester._id,
+        content: `Context from requester: ${requesterTone}. ${pick(template.details)}`,
+        createdAt: addHours(createdAt, 1),
+        updatedAt: addHours(createdAt, 1),
+    });
+
+    if (['In Progress', 'Completed', 'Review', 'Closed'].includes(status) && staff) {
+        comments.push({
+            user: staff._id,
+            content: `${staff.persona?.label || 'Staff'} update: initial checks are logged and the next action is scheduled with ${staff.department || 'the assigned team'}.`,
+            createdAt: addHours(createdAt, 10),
+            updatedAt: addHours(createdAt, 10),
+        });
+    }
+
+    if (['Completed', 'Review', 'Closed'].includes(status) && staff) {
+        comments.push({
+            user: staff._id,
+            content: `Work completed. Please review the result and confirm whether this can be closed.`,
+            createdAt: addHours(createdAt, 34),
+            updatedAt: addHours(createdAt, 34),
+        });
+    }
+
+    if (status === 'Closed') {
+        comments.push({
+            user: requester._id,
+            content: pick([
+                'Confirmed, this is working now. Thank you for the quick help.',
+                'The issue is resolved from my side. Closing this ticket.',
+                'Everything looks good now. The follow-up notes were helpful.',
+                'Resolved. I appreciate the clear updates through the process.',
+            ]),
+            createdAt: addHours(createdAt, 42),
+            updatedAt: addHours(createdAt, 42),
+        });
+    }
+
+    if (rand() > 0.72) {
+        comments.push({
+            user: admin._id,
+            content: 'Admin note: priority, owner, and service impact reviewed for reporting.',
+            createdAt: addHours(createdAt, 12),
+            updatedAt: addHours(createdAt, 12),
+        });
+    }
+
+    return comments.sort((a, b) => a.createdAt - b.createdAt);
+};
+
+const makeTickets = (users) => {
+    const admins = users.filter((user) => user.role === 'admin');
+    const staff = users.filter((user) => user.role === 'staff' && user.isActive !== false);
+    const students = users.filter((user) => user.role === 'student' && user.isActive !== false);
+    const allRequesters = [...students, ...staff.slice(0, 18), ...admins.slice(0, 2)];
+    const statusPlan = [
+        ...Array(70).fill('Approval'),
+        ...Array(95).fill('Open'),
+        ...Array(150).fill('In Progress'),
+        ...Array(125).fill('Completed'),
+        ...Array(70).fill('Review'),
+        ...Array(140).fill('Closed'),
+    ];
+
+    return statusPlan.map((status, index) => {
+        const requester = allRequesters[index % allRequesters.length];
+        const template = ticketTemplates[index % ticketTemplates.length];
+        const place = pick(template.places);
+        const assignedStaff = status === 'Approval' || (status === 'Open' && rand() > 0.65)
+            ? null
+            : staff.find((member) => member.department === template.category) || pick(staff);
+        const admin = admins[index % admins.length];
+        const createdAt = daysAgo(75 - (index % 76), 8 + (index % 10));
+        const flow = statusFlow[status];
+        const { history, stateEntryTimestamps } = makeHistory(flow, { requester, staff: assignedStaff, admin }, createdAt);
+        const priority = pick(priorityByStatus[status]);
+        const ticketType = requester.role === 'admin'
+            ? 'Admin Generated'
+            : requester.role === 'staff' ? 'Staff Generated' : 'Student Generated';
+        const resolutionDate = stateEntryTimestamps.find((entry) => entry.state === 'Completed')?.timestamp;
+        const title = pick(template.titles).replace('{place}', place);
+        const description = [
+            `${requester.name} is a ${requester.persona?.label || 'campus user'} who ${requester.persona?.voice || 'provided the issue details'}.`,
+            pick(template.details),
+            `Location/context: ${place}. This was seeded as varied demo data for dashboard, analytics, and workflow testing.`,
+        ].join(' ');
+
+        const ticket = {
+            ticketID: `CSD-${pad(index + 1, 6)}`,
+            requester: requester._id,
+            title: title.slice(0, 100),
+            description,
+            category: template.category,
+            location: place,
+            priority,
+            status,
+            ticketType,
+            assignedTo: assignedStaff?._id,
+            optimalCompletionTime: addHours(createdAt, priority === 'Urgent' ? 8 : priority === 'High' ? 24 : priority === 'Medium' ? 72 : 120),
+            adminRemarks: rand() > 0.58 ? `Seeded admin review: ${priority} priority accepted for ${template.category}.` : '',
+            feedback: ['Review', 'Closed'].includes(status) ? pick([
+                'The response was clear and timely.',
+                'Good communication, but the first estimate changed.',
+                'The fix worked after one follow-up visit.',
+                'The team explained the process well.',
+                'The final outcome was acceptable.',
+            ]) : '',
+            satisfactionTag: status === 'Closed' ? pick(['completed good', 'completed good', 'average', 'bad', 'unresolved']) : undefined,
+            stateEntryTimestamps,
+            attachments: rand() > 0.78 ? [`/uploads/seed-${pad(index + 1, 4)}.png`] : [],
+            comments: makeComments({ requester, staff: assignedStaff, admin, status, createdAt, template }),
+            history,
+            createdAt,
+            updatedAt: resolutionDate || addHours(createdAt, 18 + Math.floor(rand() * 72)),
+        };
+
+        if (!ticket.assignedTo) {
+            delete ticket.assignedTo;
+        }
+        if (!ticket.satisfactionTag) {
+            delete ticket.satisfactionTag;
+        }
+
+        return ticket;
+    });
+};
+
+const makeNotifications = (tickets) => {
+    const notifications = [];
+
+    tickets.forEach((ticket, index) => {
+        if (index % 2 === 0) {
+            notifications.push({
+                recipient: ticket.requester,
+                ticketId: ticket._id,
+                type: 'status_change',
+                message: `Ticket #${ticket.ticketID} status updated to: ${ticket.status}`,
+                read: rand() > 0.42,
+                createdAt: ticket.updatedAt,
+                updatedAt: ticket.updatedAt,
+            });
+        }
+
+        if (ticket.assignedTo && index % 3 === 0) {
+            notifications.push({
+                recipient: ticket.assignedTo,
+                ticketId: ticket._id,
+                type: 'assignment',
+                message: `Ticket #${ticket.ticketID} has been assigned for follow-up.`,
+                read: rand() > 0.35,
+                createdAt: addHours(ticket.createdAt, 6),
+                updatedAt: addHours(ticket.createdAt, 6),
+            });
+        }
+
+        if (ticket.comments.length > 1 && index % 4 === 0) {
+            notifications.push({
+                recipient: ticket.requester,
+                ticketId: ticket._id,
+                type: 'comment',
+                message: `New comment on ticket #${ticket.ticketID}: ${ticket.title}`,
+                read: rand() > 0.55,
+                createdAt: ticket.comments[ticket.comments.length - 1].createdAt,
+                updatedAt: ticket.comments[ticket.comments.length - 1].createdAt,
+            });
+        }
+    });
+
+    return notifications;
+};
 
 const seedData = async () => {
     try {
-        await mongoose.connect(MONGO_URI);
-        console.log('🔌 Connected to MongoDB');
-
-        // Clear existing data
-        await User.deleteMany({});
-        await Ticket.deleteMany({});
-        await Notification.deleteMany({});
-        console.log('🗑️  Cleared existing data');
-
-        // ============ USERS ============
-
-        // Admin (1)
-        const admin = await User.create({
-            name: 'Rohan Upadhyay',
-            email: 'rohan@campus.edu',
-            password: 'password123',
-            role: 'admin',
-            department: 'Administration',
-            contactInfo: '9876543210'
+        await mongoose.connect(MONGO_URI, {
+            dbName: MONGO_DB_NAME,
         });
+        const serverStatus = await mongoose.connection.db.admin().serverStatus();
+        console.log(`Connected to MongoDB ${serverStatus.version} at ${mongoose.connection.host}/${mongoose.connection.name}`);
 
-        // Staff (15)
-        const staffData = [
-            { name: 'Priya Sharma', email: 'priya@campus.edu', department: 'IT Support' },
-            { name: 'Vikram Singh', email: 'vikram@campus.edu', department: 'IT Support' },
-            { name: 'Anita Desai', email: 'anita@campus.edu', department: 'Facilities' },
-            { name: 'Rajesh Gupta', email: 'rajesh.g@campus.edu', department: 'Facilities' },
-            { name: 'Meena Iyer', email: 'meena@campus.edu', department: 'Academic Services' },
-            { name: 'Suresh Nair', email: 'suresh@campus.edu', department: 'IT Support' },
-            { name: 'Kavita Joshi', email: 'kavita@campus.edu', department: 'Library Services' },
-            { name: 'Deepak Rao', email: 'deepak@campus.edu', department: 'Facilities' },
-            { name: 'Sunita Kulkarni', email: 'sunita@campus.edu', department: 'Academic Services' },
-            { name: 'Manoj Tiwari', email: 'manoj@campus.edu', department: 'IT Support' },
-            { name: 'Neha Agarwal', email: 'neha.a@campus.edu', department: 'Student Affairs' },
-            { name: 'Sanjay Verma', email: 'sanjay@campus.edu', department: 'Facilities' },
-            { name: 'Pooja Reddy', email: 'pooja@campus.edu', department: 'IT Support' },
-            { name: 'Arun Menon', email: 'arun@campus.edu', department: 'Academic Services' },
-            { name: 'Lakshmi Pillai', email: 'lakshmi@campus.edu', department: 'Library Services' },
-        ];
-
-        const staffUsers = [];
-        for (const s of staffData) {
-            const user = await User.create({
-                ...s,
-                password: 'password123',
-                role: 'staff',
-                contactInfo: '98' + Math.floor(10000000 + Math.random() * 90000000)
-            });
-            staffUsers.push(user);
-        }
-
-        // Students (25)
-        const studentData = [
-            { name: 'Amit Kumar', email: 'amit@campus.edu' },
-            { name: 'Sneha Patel', email: 'sneha@campus.edu' },
-            { name: 'Raj Mehta', email: 'raj@campus.edu' },
-            { name: 'Divya Krishnan', email: 'divya@campus.edu' },
-            { name: 'Arjun Nair', email: 'arjun@campus.edu' },
-            { name: 'Riya Saxena', email: 'riya@campus.edu' },
-            { name: 'Karan Malhotra', email: 'karan@campus.edu' },
-            { name: 'Ishita Banerjee', email: 'ishita@campus.edu' },
-            { name: 'Nikhil Jain', email: 'nikhil@campus.edu' },
-            { name: 'Tanvi Deshmukh', email: 'tanvi@campus.edu' },
-            { name: 'Harsh Pandey', email: 'harsh@campus.edu' },
-            { name: 'Megha Soni', email: 'megha@campus.edu' },
-            { name: 'Varun Chauhan', email: 'varun@campus.edu' },
-            { name: 'Shweta Mishra', email: 'shweta@campus.edu' },
-            { name: 'Aman Bhatt', email: 'aman@campus.edu' },
-            { name: 'Nisha Goyal', email: 'nisha@campus.edu' },
-            { name: 'Rohit Kapoor', email: 'rohit@campus.edu' },
-            { name: 'Anjali Thakur', email: 'anjali@campus.edu' },
-            { name: 'Siddharth Pawar', email: 'siddharth@campus.edu' },
-            { name: 'Pooja Bhardwaj', email: 'pooja.b@campus.edu' },
-            { name: 'Gaurav Yadav', email: 'gaurav@campus.edu' },
-            { name: 'Sakshi Dubey', email: 'sakshi@campus.edu' },
-            { name: 'Manish Rawat', email: 'manish@campus.edu' },
-            { name: 'Priyanka Choudhary', email: 'priyanka@campus.edu' },
-            { name: 'Akash Srivastava', email: 'akash@campus.edu' },
-        ];
-
-        const studentUsers = [];
-        for (const s of studentData) {
-            const user = await User.create({
-                ...s,
-                password: 'password123',
-                role: 'student',
-                contactInfo: '97' + Math.floor(10000000 + Math.random() * 90000000)
-            });
-            studentUsers.push(user);
-        }
-
-        console.log(`👥 Created ${1 + staffUsers.length + studentUsers.length} users (1 admin, ${staffUsers.length} staff, ${studentUsers.length} students)`);
-
-        // Shortcuts
-        const staff = staffUsers[0]; // Priya
-        const staff2 = staffUsers[1]; // Vikram
-        const staff3 = staffUsers[2]; // Anita
-        const st = studentUsers; // shorthand for students array
-
-        // ============ TICKETS ============
-        const ticketsData = [
-            {
-                requester: st[0]._id,
-                title: 'WiFi not working in Library',
-                description: 'The WiFi connection in the main library (2nd floor) has been dropping intermittently since yesterday. Multiple students are affected and unable to access online resources for assignments.',
-                category: 'IT Support',
-                location: 'Library, 2nd Floor',
-                priority: 'Urgent',
-                status: 'In Progress',
-                assignedTo: staff._id,
-                comments: [
-                    { user: staff._id, content: 'I am looking into this. The access point on 2nd floor seems to need a restart.' },
-                    { user: st[0]._id, content: 'Thank you! It is still very slow though.' },
-                    { user: staff._id, content: 'We have escalated this to the network team. A technician will visit today.' }
-                ],
-                history: [
-                    { action: 'Ticket Created', by: st[0]._id },
-                    { action: 'Status changed from "Open" to "In Progress"', by: staff._id },
-                    { action: 'Ticket assigned to staff', by: admin._id }
-                ]
-            },
-            {
-                requester: st[1]._id,
-                title: 'Projector broken in Lecture Hall 3',
-                description: 'The projector in Lecture Hall 3 is not displaying anything. Tried multiple laptops and HDMI cables. The power LED is on but no image is projected.',
-                category: 'Facilities',
-                location: 'Lecture Hall 3',
-                priority: 'High',
-                status: 'Open',
-                comments: [
-                    { user: st[1]._id, content: 'The professor had to cancel the presentation today because of this.' }
-                ],
-                history: [{ action: 'Ticket Created', by: st[1]._id }]
-            },
-            {
-                requester: st[2]._id,
-                title: 'Cannot access exam results on portal',
-                description: 'I am unable to view my semester 5 exam results on the student portal. It shows "Results not found" even though results have been declared.',
-                category: 'Academic Services',
-                location: 'Online Portal',
-                priority: 'High',
-                status: 'Open',
-                comments: [],
-                history: [{ action: 'Ticket Created', by: st[2]._id }]
-            },
-            {
-                requester: st[0]._id,
-                title: 'Request for new lab software installation',
-                description: 'We need MATLAB R2025 installed on Computer Lab 2 machines for Digital Signal Processing coursework. The current version is outdated.',
-                category: 'IT Support',
-                location: 'Computer Lab 2',
-                priority: 'Medium',
-                status: 'Open',
-                comments: [
-                    { user: admin._id, content: 'We will check the license availability and schedule the installation.' }
-                ],
-                history: [{ action: 'Ticket Created', by: st[0]._id }]
-            },
-            {
-                requester: st[1]._id,
-                title: 'Air conditioning not working in Room 204',
-                description: 'The AC unit in Room 204 has stopped working. The classroom becomes extremely hot during afternoon sessions.',
-                category: 'Facilities',
-                location: 'Room 204, Block A',
-                priority: 'Medium',
-                status: 'In Progress',
-                assignedTo: staff3._id,
-                comments: [
-                    { user: staff3._id, content: 'Maintenance team has been notified. They will inspect tomorrow.' },
-                    { user: st[1]._id, content: 'Can you also check Room 205? The AC there is making loud noises.' }
-                ],
-                history: [
-                    { action: 'Ticket Created', by: st[1]._id },
-                    { action: 'Status changed from "Open" to "In Progress"', by: staff3._id }
-                ]
-            },
-            {
-                requester: st[2]._id,
-                title: 'Library book reservation system bug',
-                description: 'The online library book reservation system shows books as available but reservation fails with "Book already reserved".',
-                category: 'IT Support',
-                location: 'Online',
-                priority: 'Low',
-                status: 'Resolved',
-                assignedTo: staff._id,
-                comments: [
-                    { user: staff._id, content: 'This was a caching issue. It has been fixed now.' },
-                    { user: st[2]._id, content: 'Confirmed, working fine now. Thanks!' }
-                ],
-                history: [
-                    { action: 'Ticket Created', by: st[2]._id },
-                    { action: 'Status changed from "Open" to "In Progress"', by: staff._id },
-                    { action: 'Status changed from "In Progress" to "Resolved"', by: staff._id }
-                ]
-            },
-            {
-                requester: st[0]._id,
-                title: 'Request for transcript copy',
-                description: 'I need an official transcript copy for my internship application. Please guide me on the process.',
-                category: 'Academic Services',
-                location: 'Admin Office',
-                priority: 'Low',
-                status: 'Closed',
-                assignedTo: staffUsers[4]._id,
-                comments: [
-                    { user: staffUsers[4]._id, content: 'Please visit the academic office with your ID card. Ready in 3 working days.' },
-                    { user: st[0]._id, content: 'Got it, thank you!' }
-                ],
-                history: [
-                    { action: 'Ticket Created', by: st[0]._id },
-                    { action: 'Status changed from "Open" to "Resolved"', by: staffUsers[4]._id },
-                    { action: 'Status changed from "Resolved" to "Closed"', by: st[0]._id }
-                ]
-            },
-            {
-                requester: st[3]._id,
-                title: 'Broken chair in Classroom 101',
-                description: 'There are 3 broken chairs in Classroom 101. One has a broken backrest and two have wobbly legs.',
-                category: 'Facilities',
-                location: 'Classroom 101, Block B',
-                priority: 'Low',
-                status: 'Open',
-                comments: [],
-                history: [{ action: 'Ticket Created', by: st[3]._id }]
-            },
-            {
-                requester: st[4]._id,
-                title: 'Printer not working in Computer Lab 1',
-                description: 'The HP LaserJet printer shows "Paper Jam" error but there is no jam visible. Students cannot print assignments.',
-                category: 'IT Support',
-                location: 'Computer Lab 1',
-                priority: 'High',
-                status: 'In Progress',
-                assignedTo: staff2._id,
-                comments: [
-                    { user: staff2._id, content: 'Looking into it. The sensor might need cleaning.' }
-                ],
-                history: [
-                    { action: 'Ticket Created', by: st[4]._id },
-                    { action: 'Status changed from "Open" to "In Progress"', by: staff2._id }
-                ]
-            },
-            {
-                requester: st[5]._id,
-                title: 'Hostel water heater not functioning',
-                description: 'The water heater in Girls Hostel Block A, 2nd floor bathroom has stopped working for 2 days.',
-                category: 'Facilities',
-                location: 'Girls Hostel, Block A, 2nd Floor',
-                priority: 'Medium',
-                status: 'Resolved',
-                assignedTo: staff3._id,
-                comments: [
-                    { user: staff3._id, content: 'The heating element was faulty. It has been replaced.' },
-                    { user: st[5]._id, content: 'Working perfectly now, thanks!' }
-                ],
-                history: [
-                    { action: 'Ticket Created', by: st[5]._id },
-                    { action: 'Status changed from "Open" to "In Progress"', by: staff3._id },
-                    { action: 'Status changed from "In Progress" to "Resolved"', by: staff3._id }
-                ]
-            },
-            {
-                requester: st[6]._id,
-                title: 'Course registration portal timing out',
-                description: 'During the course registration window, the portal keeps timing out. The add-drop deadline is approaching.',
-                category: 'Academic Services',
-                location: 'Online Portal',
-                priority: 'Urgent',
-                status: 'Resolved',
-                assignedTo: staff._id,
-                comments: [
-                    { user: staff._id, content: 'Server was overloaded. We have added additional capacity.' },
-                    { user: st[6]._id, content: 'Much faster now. Registered successfully.' },
-                    { user: admin._id, content: 'We will monitor during the next registration window.' }
-                ],
-                history: [
-                    { action: 'Ticket Created', by: st[6]._id },
-                    { action: 'Priority changed from "High" to "Urgent"', by: admin._id },
-                    { action: 'Status changed from "Open" to "In Progress"', by: staff._id },
-                    { action: 'Status changed from "In Progress" to "Resolved"', by: staff._id }
-                ]
-            },
-            {
-                requester: st[7]._id,
-                title: 'Parking area lights not working',
-                description: 'The lights in the student parking area near Gate 2 have been off for the past week. Very dark and unsafe at night.',
-                category: 'Other',
-                location: 'Parking Area, Gate 2',
-                priority: 'Medium',
-                status: 'Open',
-                comments: [],
-                history: [{ action: 'Ticket Created', by: st[7]._id }]
-            },
-            {
-                requester: st[8]._id,
-                title: 'Laptop charging points not working in Reading Room',
-                description: 'Multiple power outlets in the library reading room are not providing power. Students cannot charge laptops while studying.',
-                category: 'Facilities',
-                location: 'Library Reading Room',
-                priority: 'Medium',
-                status: 'Open',
-                comments: [
-                    { user: st[8]._id, content: 'At least 6 out of 10 charging points on the left side are dead.' }
-                ],
-                history: [{ action: 'Ticket Created', by: st[8]._id }]
-            },
-            {
-                requester: st[9]._id,
-                title: 'Student ID card replacement',
-                description: 'I lost my student ID card and need a replacement. What is the procedure and cost?',
-                category: 'Academic Services',
-                location: 'Admin Office',
-                priority: 'Low',
-                status: 'Resolved',
-                assignedTo: staffUsers[4]._id,
-                comments: [
-                    { user: staffUsers[4]._id, content: 'Please submit a written application with a passport photo and Rs. 200 fee at the admin office.' },
-                    { user: st[9]._id, content: 'Done. When can I collect it?' },
-                    { user: staffUsers[4]._id, content: 'It will be ready in 5 working days. You will receive an SMS notification.' }
-                ],
-                history: [
-                    { action: 'Ticket Created', by: st[9]._id },
-                    { action: 'Status changed from "Open" to "In Progress"', by: staffUsers[4]._id },
-                    { action: 'Status changed from "In Progress" to "Resolved"', by: staffUsers[4]._id }
-                ]
-            },
-            {
-                requester: st[10]._id,
-                title: 'Slow internet in Boys Hostel Block D',
-                description: 'Internet speed in Boys Hostel Block D has been extremely slow for the past 3 days. Speed test shows less than 1 Mbps.',
-                category: 'IT Support',
-                location: 'Boys Hostel, Block D',
-                priority: 'High',
-                status: 'In Progress',
-                assignedTo: staffUsers[5]._id,
-                comments: [
-                    { user: staffUsers[5]._id, content: 'We are investigating. May be a bandwidth issue during peak hours.' },
-                    { user: st[10]._id, content: 'It is slow even at 2 AM.' }
-                ],
-                history: [
-                    { action: 'Ticket Created', by: st[10]._id },
-                    { action: 'Status changed from "Open" to "In Progress"', by: staffUsers[5]._id }
-                ]
-            },
-            {
-                requester: st[11]._id,
-                title: 'Canteen hygiene complaint',
-                description: 'Found insects in the food served at the main canteen yesterday. Multiple students fell sick. This needs urgent attention.',
-                category: 'Other',
-                location: 'Main Canteen',
-                priority: 'Urgent',
-                status: 'In Progress',
-                assignedTo: staffUsers[10]._id,
-                comments: [
-                    { user: staffUsers[10]._id, content: 'We are taking this very seriously. An inspection has been ordered.' },
-                    { user: admin._id, content: 'The canteen vendor has been issued a warning. Health inspector visit scheduled for tomorrow.' }
-                ],
-                history: [
-                    { action: 'Ticket Created', by: st[11]._id },
-                    { action: 'Priority changed from "High" to "Urgent"', by: admin._id },
-                    { action: 'Status changed from "Open" to "In Progress"', by: staffUsers[10]._id }
-                ]
-            },
-            {
-                requester: st[12]._id,
-                title: 'Science lab equipment calibration needed',
-                description: 'The oscilloscopes in Physics Lab need calibration. Readings are inaccurate and affecting experiment results.',
-                category: 'Facilities',
-                location: 'Physics Lab, Block C',
-                priority: 'Medium',
-                status: 'Open',
-                assignedTo: staff3._id,
-                comments: [],
-                history: [{ action: 'Ticket Created', by: st[12]._id }]
-            },
-            {
-                requester: st[13]._id,
-                title: 'Email account locked',
-                description: 'My campus email account has been locked after multiple failed login attempts. I need it for assignment submissions.',
-                category: 'IT Support',
-                location: 'Online',
-                priority: 'High',
-                status: 'Resolved',
-                assignedTo: staff2._id,
-                comments: [
-                    { user: staff2._id, content: 'Your account has been unlocked. Please reset your password using the portal.' },
-                    { user: st[13]._id, content: 'Thank you, I can access it now.' }
-                ],
-                history: [
-                    { action: 'Ticket Created', by: st[13]._id },
-                    { action: 'Status changed from "Open" to "In Progress"', by: staff2._id },
-                    { action: 'Status changed from "In Progress" to "Resolved"', by: staff2._id }
-                ]
-            },
-            {
-                requester: st[14]._id,
-                title: 'Drinking water cooler leaking',
-                description: 'The water cooler near the entrance of Block B is leaking continuously, creating a puddle and safety hazard.',
-                category: 'Facilities',
-                location: 'Block B Entrance',
-                priority: 'Medium',
-                status: 'Closed',
-                assignedTo: staff3._id,
-                comments: [
-                    { user: staff3._id, content: 'The plumber has fixed the leak. The old pipe fitting was replaced.' }
-                ],
-                history: [
-                    { action: 'Ticket Created', by: st[14]._id },
-                    { action: 'Status changed from "Open" to "In Progress"', by: staff3._id },
-                    { action: 'Status changed from "In Progress" to "Resolved"', by: staff3._id },
-                    { action: 'Status changed from "Resolved" to "Closed"', by: admin._id }
-                ]
-            },
-            {
-                requester: st[15]._id,
-                title: 'Scholarship form download not working',
-                description: 'The scholarship application form PDF on the university website gives a 404 error when trying to download.',
-                category: 'Academic Services',
-                location: 'Online',
-                priority: 'High',
-                status: 'Resolved',
-                assignedTo: staff._id,
-                comments: [
-                    { user: staff._id, content: 'The link has been fixed. Please try downloading again.' },
-                    { user: st[15]._id, content: 'Works now, thanks!' }
-                ],
-                history: [
-                    { action: 'Ticket Created', by: st[15]._id },
-                    { action: 'Status changed from "Open" to "Resolved"', by: staff._id }
-                ]
-            },
-            {
-                requester: st[16]._id,
-                title: 'Smart board malfunction in Room 305',
-                description: 'The interactive smart board in Room 305 is unresponsive to touch. It displays content but touch input does not work.',
-                category: 'IT Support',
-                location: 'Room 305, Block A',
-                priority: 'Medium',
-                status: 'Open',
-                comments: [],
-                history: [{ action: 'Ticket Created', by: st[16]._id }]
-            },
-            {
-                requester: st[17]._id,
-                title: 'Elevator stuck between floors',
-                description: 'The elevator in Block A got stuck between 2nd and 3rd floor today with students inside. It took 20 minutes to rescue.',
-                category: 'Facilities',
-                location: 'Block A Elevator',
-                priority: 'Urgent',
-                status: 'In Progress',
-                assignedTo: staffUsers[3]._id,
-                comments: [
-                    { user: staffUsers[3]._id, content: 'Elevator has been shut down for maintenance. The lift company technician is on site.' },
-                    { user: admin._id, content: 'All elevators in Block A will undergo safety inspection this week.' }
-                ],
-                history: [
-                    { action: 'Ticket Created', by: st[17]._id },
-                    { action: 'Status changed from "Open" to "In Progress"', by: staffUsers[3]._id }
-                ]
-            },
-            {
-                requester: st[18]._id,
-                title: 'Request for extra tutorial sessions',
-                description: 'Many students in CSE 3rd year are struggling with Data Structures. Can the department arrange extra tutorial sessions?',
-                category: 'Academic Services',
-                location: 'CSE Department',
-                priority: 'Low',
-                status: 'Open',
-                comments: [
-                    { user: st[19]._id, content: 'I agree, we really need extra sessions before the mid-term exams.' }
-                ],
-                history: [{ action: 'Ticket Created', by: st[18]._id }]
-            },
-            {
-                requester: st[20]._id,
-                title: 'CCTV camera blind spots in parking lot',
-                description: 'Two-wheeler thefts have been reported in the parking area. Several CCTV cameras seem to have blind spots.',
-                category: 'Other',
-                location: 'Two-Wheeler Parking, Gate 1',
-                priority: 'High',
-                status: 'Open',
-                comments: [
-                    { user: st[20]._id, content: 'My friend also lost his bike side mirror last week.' }
-                ],
-                history: [{ action: 'Ticket Created', by: st[20]._id }]
-            },
-            {
-                requester: st[21]._id,
-                title: 'VPN access for remote lab work',
-                description: 'I need VPN access configured to connect to the campus network from my hostel for accessing licensed software remotely.',
-                category: 'IT Support',
-                location: 'Remote',
-                priority: 'Medium',
-                status: 'Resolved',
-                assignedTo: staffUsers[9]._id,
-                comments: [
-                    { user: staffUsers[9]._id, content: 'VPN credentials have been sent to your campus email. Follow the setup guide attached.' },
-                    { user: st[21]._id, content: 'Connected successfully. Thank you!' }
-                ],
-                history: [
-                    { action: 'Ticket Created', by: st[21]._id },
-                    { action: 'Status changed from "Open" to "Resolved"', by: staffUsers[9]._id }
-                ]
-            },
-            {
-                requester: st[22]._id,
-                title: 'Leaking roof in Sports Room',
-                description: 'The roof in the indoor sports room is leaking during rain. Water is collecting on the badminton court floor, making it slippery.',
-                category: 'Facilities',
-                location: 'Indoor Sports Complex',
-                priority: 'High',
-                status: 'Open',
-                comments: [],
-                history: [{ action: 'Ticket Created', by: st[22]._id }]
-            },
-            {
-                requester: st[23]._id,
-                title: 'Grade correction request for Mathematics',
-                description: 'There seems to be an error in my Mathematics mid-term grade. My answer sheet shows 38/50 but the portal shows 28/50.',
-                category: 'Academic Services',
-                location: 'Online Portal',
-                priority: 'High',
-                status: 'In Progress',
-                assignedTo: staffUsers[8]._id,
-                comments: [
-                    { user: staffUsers[8]._id, content: 'We have forwarded your request to the Mathematics department for verification.' },
-                    { user: st[23]._id, content: 'Please expedite this, the final grades are being compiled soon.' }
-                ],
-                history: [
-                    { action: 'Ticket Created', by: st[23]._id },
-                    { action: 'Status changed from "Open" to "In Progress"', by: staffUsers[8]._id }
-                ]
-            },
-            {
-                requester: st[24]._id,
-                title: 'Fire extinguisher expired in Block D',
-                description: 'Noticed that the fire extinguisher on Block D, 4th floor corridor has expired (last inspection date was 2024). This is a safety concern.',
-                category: 'Other',
-                location: 'Block D, 4th Floor Corridor',
-                priority: 'Urgent',
-                status: 'In Progress',
-                assignedTo: staffUsers[11]._id,
-                comments: [
-                    { user: staffUsers[11]._id, content: 'Good catch. We are scheduling replacement for all expired extinguishers campus-wide.' },
-                    { user: admin._id, content: 'Safety audit has been initiated across all blocks.' }
-                ],
-                history: [
-                    { action: 'Ticket Created', by: st[24]._id },
-                    { action: 'Status changed from "Open" to "In Progress"', by: staffUsers[11]._id }
-                ]
-            },
-        ];
-
-        // Create tickets one by one for sequential ID generation
-        for (const ticketData of ticketsData) {
-            await Ticket.create(ticketData);
-        }
-        console.log(`🎫 Created ${ticketsData.length} tickets with comments and history`);
-
-        // Create sample notifications
-        await Notification.create([
-            { recipient: st[0]._id, message: 'Ticket #CSD-000001 status updated to: In Progress', read: false },
-            { recipient: st[1]._id, message: 'New comment on your ticket about projector in Lecture Hall 3', read: false },
-            { recipient: st[2]._id, message: 'Ticket #CSD-000006 has been resolved', read: true },
-            { recipient: st[0]._id, message: 'Your transcript request has been processed', read: true },
-            { recipient: st[6]._id, message: 'Ticket #CSD-000011 status updated to: Resolved', read: false },
-            { recipient: st[11]._id, message: 'Your canteen complaint is being investigated', read: false },
-            { recipient: st[17]._id, message: 'Elevator maintenance has been scheduled', read: false },
-            { recipient: st[24]._id, message: 'Fire safety audit initiated based on your report', read: true },
+        await Promise.all([
+            User.deleteMany({}),
+            Ticket.deleteMany({}),
+            Notification.deleteMany({}),
+            FAQ.deleteMany({}),
         ]);
-        console.log('🔔 Created sample notifications');
+        console.log('Cleared existing users, tickets, notifications, and FAQs');
 
-        console.log('\n✅ Seed data created successfully!');
-        console.log('\n📋 Login Credentials (all use password: password123):');
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-        console.log('  ADMIN:   rohan@campus.edu');
-        console.log('  STAFF:   priya@campus.edu, vikram@campus.edu, anita@campus.edu ...(15 total)');
-        console.log('  STUDENT: amit@campus.edu, sneha@campus.edu, raj@campus.edu ...(25 total)');
-        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        const usersToInsert = await makeUsers();
+        const insertedUsers = await User.insertMany(usersToInsert, { ordered: true });
+        const users = insertedUsers.map((user, index) => ({
+            ...user.toObject(),
+            persona: usersToInsert[index].persona,
+        }));
+        const ticketsToInsert = makeTickets(users);
+        const tickets = await Ticket.insertMany(ticketsToInsert, { ordered: true });
+        const notifications = await Notification.insertMany(makeNotifications(tickets), { ordered: true });
+        const faqs = await FAQ.insertMany(faqData.map(([question, category, answer], index) => ({
+            question,
+            category,
+            answer,
+            createdBy: users.find((user) => user.role === 'admin')._id,
+            createdAt: daysAgo(20 - (index % 20), 9),
+            updatedAt: daysAgo(20 - (index % 20), 9),
+        })));
 
+        const roleCounts = await User.aggregate([{ $group: { _id: '$role', count: { $sum: 1 } } }]);
+        const statusCounts = await Ticket.aggregate([{ $group: { _id: '$status', count: { $sum: 1 } } }]);
+        console.log('Seed complete');
+        console.log(`Users: ${users.length}`, roleCounts);
+        console.log(`Tickets: ${tickets.length}`, statusCounts);
+        console.log(`Notifications: ${notifications.length}`);
+        console.log(`FAQs: ${faqs.length}`);
+        console.log('Required login users:');
+        console.log(`  students@csd.edu / ${PASSWORD}`);
+        console.log(`  staff@csd.edu / ${PASSWORD}`);
+        console.log(`  admin@csd.edu / ${PASSWORD}`);
+
+        await mongoose.disconnect();
         process.exit(0);
     } catch (error) {
-        console.error('❌ Error seeding data:', error);
+        console.error('Error seeding data:', error);
+        await mongoose.disconnect();
         process.exit(1);
     }
 };

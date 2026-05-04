@@ -12,11 +12,15 @@ connectDB();
 
 const app = express();
 const httpServer = http.createServer(app);
+const corsOptions = {
+    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    credentials: true,
+};
 
 // Socket.io setup
 const io = new Server(httpServer, {
     cors: {
-        origin: '*',
+        ...corsOptions,
         methods: ['GET', 'POST', 'PUT', 'DELETE']
     }
 });
@@ -37,7 +41,7 @@ io.on('connection', (socket) => {
 
 // Middleware
 app.use(express.json());
-app.use(cors());
+app.use(cors(corsOptions));
 
 // Routes
 const authRoutes = require('./routes/authRoutes');
