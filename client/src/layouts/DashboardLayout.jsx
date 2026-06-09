@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Outlet, useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
@@ -18,6 +18,7 @@ export default function DashboardLayout() {
     const navigate = useNavigate();
     const location = useLocation();
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const closeBtnRef = useRef(null);
 
     // Close sidebar on route change (mobile)
     useEffect(() => {
@@ -35,10 +36,13 @@ export default function DashboardLayout() {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    // Prevent body scroll when mobile sidebar is open
+    // Prevent body scroll when mobile sidebar is open, and focus the close button
     useEffect(() => {
         if (sidebarOpen) {
             document.body.style.overflow = 'hidden';
+            if (closeBtnRef.current) {
+                closeBtnRef.current.focus();
+            }
         } else {
             document.body.style.overflow = '';
         }
@@ -86,6 +90,7 @@ export default function DashboardLayout() {
                 </div>
                 {/* Close button — mobile only */}
                 <button
+                    ref={closeBtnRef}
                     onClick={() => setSidebarOpen(false)}
                     className="md:hidden ml-auto p-1.5 rounded-lg hover:bg-[var(--csd-bg-subtle)] transition"
                     style={{ color: 'var(--csd-text-primary)' }}
@@ -199,7 +204,8 @@ export default function DashboardLayout() {
         <div className="flex h-screen" style={{ backgroundColor: 'var(--csd-bg-main)' }}>
             {/* Mobile Top Bar */}
             <div className="fixed top-0 left-0 right-0 z-40 md:hidden flex items-center justify-between px-4 h-14 shadow-sm"
-                 style={{ backgroundColor: 'var(--csd-sidebar-bg)', borderBottom: '1px solid var(--csd-bg-subtle)' }}>
+                 style={{ backgroundColor: 'var(--csd-sidebar-bg)', borderBottom: '1px solid var(--csd-bg-subtle)' }}
+                 inert={sidebarOpen ? "" : undefined}>
                 <button
                     onClick={() => setSidebarOpen(true)}
                     className="p-2 rounded-lg hover:bg-[var(--csd-bg-subtle)] transition"
@@ -239,12 +245,15 @@ export default function DashboardLayout() {
             <aside
                 className={`mobile-sidebar-drawer md:sidebar md:sidebar-expanded flex flex-col shadow-md ${sidebarOpen ? 'mobile-sidebar-open' : ''}`}
                 style={{ backgroundColor: 'var(--csd-sidebar-bg)' }}
+                role={sidebarOpen ? "dialog" : undefined}
+                aria-modal={sidebarOpen ? "true" : undefined}
+                aria-label={sidebarOpen ? "Mobile Menu" : undefined}
             >
                 {sidebarContent}
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 overflow-y-auto pt-14 md:pt-0 p-4 md:p-8" style={{ marginLeft: '0' }}>
+            <main className="flex-1 overflow-y-auto pt-14 md:pt-0 p-4 md:p-8" style={{ marginLeft: '0' }} inert={sidebarOpen ? "" : undefined}>
                 <Outlet />
             </main>
         </div>
